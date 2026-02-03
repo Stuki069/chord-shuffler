@@ -1,0 +1,1181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chord Shuffler</title>
+
+  <!-- SVGuitar (MIT) -->
+  <script src="https://omnibrain.github.io/svguitar/js/svguitar.umd.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b0d12;
+      --panel:#121725;
+      --text:#e8ecf4;
+      --muted:#a9b2c6;
+      --accent:#7aa2ff;
+      --warn:#ffd27a;
+      --border:rgba(255,255,255,.10);
+      --shadow: 0 10px 25px rgba(0,0,0,.35);
+      --radius: 16px;
+      --radius2: 12px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 0%, #172045 0%, transparent 55%),
+                  radial-gradient(900px 700px at 90% 10%, #1a2a3f 0%, transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    header{
+      padding:16px 14px 10px;
+      position:sticky; top:0;
+      background: linear-gradient(to bottom, rgba(11,13,18,.95), rgba(11,13,18,.65), transparent);
+      backdrop-filter: blur(10px);
+      z-index:10;
+    }
+    h1{
+      margin:0 0 8px;
+      font-size:18px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .pill{
+      font-size:12px;
+      padding:4px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      color:var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+    .container{ padding: 10px 12px 24px; max-width: 1100px; margin: 0 auto; }
+    .tabs{ display:flex; gap:8px; padding: 6px 0 0; }
+    .tab{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      cursor:pointer;
+      font-size: 13px;
+      color: var(--muted);
+      user-select:none;
+    }
+    .tab.on{
+      color: var(--text);
+      background: rgba(122,162,255,.18);
+      border-color: rgba(122,162,255,.35);
+    }
+
+    .grid{ display:grid; gap:12px; }
+    @media (min-width: 900px){ .grid.cols-2{ grid-template-columns: 1.1fr .9fr; } }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel .hd{
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      background: rgba(255,255,255,.02);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .panel .hd h2{ font-size:14px; margin:0; }
+    .panel .bd{ padding: 12px 14px 14px; }
+
+    .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .spacer{ flex:1; }
+
+    .btn{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn.small{ padding:6px 10px; border-radius: 10px; font-size: 12px; }
+    .btn.primary{ background: rgba(122,162,255,.18); border-color: rgba(122,162,255,.35); }
+    .btn.warn{ background: rgba(255,210,122,.14); border-color: rgba(255,210,122,.35); }
+    .btn.toggle.on{ background: rgba(122,162,255,.22); border-color: rgba(122,162,255,.45); }
+
+    .chip{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      padding:8px 10px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-size: 13px;
+      user-select:none;
+    }
+    .chip.on{ background: rgba(122,162,255,.22); border-color: rgba(122,162,255,.45); }
+
+    .field{ display:flex; flex-direction:column; gap:6px; min-width: 170px; }
+    .label{ font-size: 12px; color: var(--muted); }
+    .input, select{
+      width:100%;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      outline:none;
+      color: var(--text);
+    }
+    .hint{ font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+    .type-list{ display:grid; gap:8px; max-height: 440px; overflow:auto; padding-right: 6px; }
+    .type-item{
+      display:flex; align-items:center; gap:10px;
+      padding: 10px 10px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,.02);
+    }
+    .type-item input{ transform: scale(1.1); }
+    .type-meta{ display:flex; flex-direction:column; gap:2px; }
+    .type-title{ font-size: 13px; }
+    .type-sub{ font-size: 12px; color: var(--muted); }
+
+    .trainer{ display:grid; gap:12px; }
+    .bigChord{ font-size: 34px; font-weight: 700; letter-spacing: .3px; }
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .card{
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      padding: 10px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      min-height: 240px;
+    }
+    .cardTop{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; color: var(--muted); }
+    .star{ cursor:pointer; user-select:none; font-size: 16px; opacity: .9; }
+    .star.on{ color: var(--warn); }
+    .svgWrap{ display:flex; justify-content:center; align-items:center; min-height: 170px; }
+    .badge{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+    }
+    .divider{ height:1px; background: var(--border); margin: 8px 0; }
+
+    .errorBanner{
+      display:none;
+      padding:10px 12px;
+      border:1px solid rgba(255,122,139,.5);
+      background: rgba(255,122,139,.12);
+      border-radius: 12px;
+      color: var(--text);
+      margin: 10px 0;
+      white-space: pre-wrap;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>
+    Chord Shuffler
+    <span class="pill">triads + 4‑note voicings • prioritise 1–3 & 2–4</span>
+  </h1>
+</header>
+
+<div class="container">
+  <div id="errorBanner" class="errorBanner"></div>
+
+  <div class="tabs">
+    <div id="tabSetup" class="tab on">Setup</div>
+    <div id="tabTrainer" class="tab">Trainer</div>
+  </div>
+
+  <div id="setupView" class="grid cols-2" style="margin-top:10px;">
+    <div class="grid" style="gap:12px;">
+      <div class="panel">
+        <div class="hd">
+          <h2>1) Root notes</h2>
+          <div class="row">
+            <button id="btnAllRoots" class="btn small">All</button>
+            <button id="btnNoneRoots" class="btn small">None</button>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="row" style="margin-bottom:10px;">
+            <button id="btnEnhSharp" class="btn small toggle on">Sharps</button>
+            <button id="btnEnhFlat" class="btn small toggle">Flats</button>
+            <span class="hint">Display toggle only.</span>
+          </div>
+          <div id="rootChips" class="row"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="hd">
+          <h2>2) Chord types</h2>
+          <div class="row">
+            <button id="btnAllTypes" class="btn small">All</button>
+            <button id="btnNoneTypes" class="btn small">None</button>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="row" style="gap:8px; margin-bottom:10px;">
+            <input id="typeSearch" class="input" placeholder="Search chord types (e.g. maj, b9, sus2)..." />
+            <button id="btnBasic" class="btn small">Basic</button>
+            <button id="btnExtended" class="btn small">Extended</button>
+            <button id="btnAltered" class="btn small">Altered</button>
+          </div>
+          <div class="hint" style="margin-bottom:10px;">
+            Types are standardised (symbols), based on the All Guitar Chords index.
+          </div>
+          <div id="typeList" class="type-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="gap:12px;">
+      <div class="panel">
+        <div class="hd">
+          <h2>Play settings</h2>
+          <span class="badge" id="summaryBadge">0 chords in pool</span>
+        </div>
+        <div class="bd">
+          <div class="grid" style="gap:10px;">
+            <div class="row">
+              <div class="field">
+                <div class="label">Mode</div>
+                <select id="modeSelect">
+                  <option value="deck">Deck / shuffle (no repeats)</option>
+                  <option value="random">Random (can repeat)</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="label">Auto‑advance</div>
+                <select id="autoSelect">
+                  <option value="off">Off</option>
+                  <option value="on">On</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="label">Seconds</div>
+                <input id="secondsInput" class="input" type="number" min="1" step="1" value="6"/>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <div class="field">
+                <div class="label">Fret band (low)</div>
+                <input id="bandLow" class="input" type="number" min="1" max="24" value="5"/>
+              </div>
+              <div class="field">
+                <div class="label">Fret band (high)</div>
+                <input id="bandHigh" class="input" type="number" min="1" max="24" value="12"/>
+              </div>
+              <div class="field">
+                <div class="label">Max span</div>
+                <input id="maxSpan" class="input" type="number" min="1" max="6" value="4"/>
+              </div>
+            </div>
+
+            <div class="row">
+              <button id="btnPreferTop" class="btn small toggle on">Prefer top strings</button>
+              <button id="btnBassTop" class="btn small toggle on">Allow bass+top</button>
+              <button id="btnFavFirst" class="btn small toggle on">Favourites first</button>
+              <button id="btnFavOnly" class="btn small toggle">Favourites only</button>
+            </div>
+
+            <div class="row">
+              <div class="field" style="min-width:220px;">
+                <div class="label">Max voicings to show</div>
+                <input id="maxShow" class="input" type="number" min="4" max="80" value="18"/>
+              </div>
+              <div class="spacer"></div>
+              <button id="btnGoTrainer" class="btn primary">Go to Trainer</button>
+            </div>
+
+            <div class="hint">
+              Root omission is allowed. 2–5 shapes only appear when string 5 is the root.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="hd">
+          <h2>Presets</h2>
+          <div class="row">
+            <button id="btnSavePreset" class="btn small primary">Save</button>
+            <button id="btnDeletePreset" class="btn small warn">Delete</button>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="grid" style="gap:10px;">
+            <div class="field">
+              <div class="label">Load preset</div>
+              <select id="presetSelect"></select>
+            </div>
+            <div class="field">
+              <div class="label">New preset label</div>
+              <input id="presetLabel" class="input" placeholder="e.g. ‘Triads 7–11’, ‘Altered dominants’" />
+            </div>
+          </div>
+          <div class="hint" style="margin-top:10px;">Saved locally on this device/browser.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="trainerView" style="display:none; margin-top:10px;">
+    <div class="grid cols-2">
+      <div class="panel">
+        <div class="hd">
+          <h2>Trainer</h2>
+          <div class="row">
+            <button id="btnBackSetup" class="btn small">Back</button>
+            <button id="btnPlay" class="btn small primary">Play</button>
+            <button id="btnNext" class="btn small">Next</button>
+            <button id="btnDisplay" class="btn small warn">Display</button>
+            <button id="btnClearDiagrams" class="btn small">Clear</button>
+          </div>
+        </div>
+        <div class="bd trainer">
+          <div class="bigChord" id="currentChord">—</div>
+          <div class="row">
+            <span class="badge" id="poolInfo">Pick some roots & types…</span>
+            <span class="badge" id="timerInfo" style="display:none;">auto</span>
+            <span class="badge" id="voicingCount">0</span>
+          </div>
+          <div class="hint">Play → Display shows voicings in your fret band. Next clears and advances.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="hd"><h2>Voicing filters</h2></div>
+        <div class="bd">
+          <div class="row">
+            <button id="btnShowTriads" class="btn small toggle on">Triads</button>
+            <button id="btnShowFour" class="btn small toggle on">4‑note</button>
+          </div>
+          <div class="hint" style="margin-top:10px;">
+            Prioritises 1–3 and 2–4. 2–5 only when 5th string is the root. Rootless voicings allowed.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:12px;">
+      <div class="hd"><h2>Chord diagrams</h2></div>
+      <div class="bd">
+        <div id="cards" class="cards"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Show JS errors in-page so it never looks “static” without explanation */
+window.addEventListener("error", (e) => {
+  const el = document.getElementById("errorBanner");
+  if(!el) return;
+  el.style.display = "block";
+  el.textContent =
+    "JavaScript error (this stops the app running):\\n" +
+    (e.message || "Unknown error") +
+    (e.filename ? ("\\n" + e.filename + ":" + e.lineno + ":" + e.colno) : "");
+});
+
+/* -------------------------
+   Data + note naming
+--------------------------*/
+const NOTE_PC = {
+  "C":0,"C#":1,"Db":1,"D":2,"D#":3,"Eb":3,"E":4,"F":5,"F#":6,"Gb":6,"G":7,"G#":8,"Ab":8,"A":9,"A#":10,"Bb":10,"B":11
+};
+const SHARP_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const FLAT_NAMES  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+
+const ROOTS_ORDERED = [
+  { pc: NOTE_PC["A"],  sharp:"A",  flat:"A"  },
+  { pc: NOTE_PC["A#"], sharp:"A#", flat:"Bb" },
+  { pc: NOTE_PC["B"],  sharp:"B",  flat:"B"  },
+  { pc: NOTE_PC["C"],  sharp:"C",  flat:"C"  },
+  { pc: NOTE_PC["C#"], sharp:"C#", flat:"Db" },
+  { pc: NOTE_PC["D"],  sharp:"D",  flat:"D"  },
+  { pc: NOTE_PC["D#"], sharp:"D#", flat:"Eb" },
+  { pc: NOTE_PC["E"],  sharp:"E",  flat:"E"  },
+  { pc: NOTE_PC["F"],  sharp:"F",  flat:"F"  },
+  { pc: NOTE_PC["F#"], sharp:"F#", flat:"Gb" },
+  { pc: NOTE_PC["G"],  sharp:"G",  flat:"G"  },
+  { pc: NOTE_PC["G#"], sharp:"G#", flat:"Ab" }
+];
+
+// Standard tuning: string 6 low E -> 1 high e
+const STRING_OPEN_PC = { 6: NOTE_PC["E"], 5: NOTE_PC["A"], 4: NOTE_PC["D"], 3: NOTE_PC["G"], 2: NOTE_PC["B"], 1: NOTE_PC["E"] };
+
+const CHORD_TYPES = [
+  { sym:"", name:"Major", group:"Basic", intervals:[0,4,7], require:[0,4,7] },
+  { sym:"m", name:"Minor", group:"Basic", intervals:[0,3,7], require:[0,3,7] },
+  { sym:"7", name:"Dominant 7", group:"Basic", intervals:[0,4,7,10], require:[0,4,10] },
+  { sym:"5", name:"Power (5)", group:"Basic", intervals:[0,7], require:[0,7] },
+  { sym:"dim", name:"Diminished", group:"Basic", intervals:[0,3,6], require:[0,3,6] },
+  { sym:"dim7", name:"Diminished 7", group:"Basic", intervals:[0,3,6,9], require:[0,3,6,9] },
+  { sym:"aug", name:"Augmented", group:"Basic", intervals:[0,4,8], require:[0,4,8] },
+  { sym:"sus2", name:"Sus2", group:"Basic", intervals:[0,2,7], require:[0,2,7] },
+  { sym:"sus", name:"Sus4 (sus)", group:"Basic", intervals:[0,5,7], require:[0,5,7] },
+  { sym:"maj7", name:"Major 7", group:"Basic", intervals:[0,4,7,11], require:[0,4,11] },
+  { sym:"m7", name:"Minor 7", group:"Basic", intervals:[0,3,7,10], require:[0,3,10] },
+  { sym:"7sus4", name:"7sus4", group:"Basic", intervals:[0,5,7,10], require:[0,5,10] },
+
+  { sym:"maj9", name:"Maj 9", group:"Extended", intervals:[0,4,7,11,2], require:[0,4,11,2] },
+  { sym:"maj11", name:"Maj 11", group:"Extended", intervals:[0,4,7,11,2,5], require:[0,4,11,5] },
+  { sym:"maj13", name:"Maj 13", group:"Extended", intervals:[0,4,7,11,2,5,9], require:[0,4,11,9] },
+  { sym:"maj9(#11)", name:"Maj 9 (#11)", group:"Extended", intervals:[0,4,7,11,2,6], require:[0,4,11,6] },
+  { sym:"maj13(#11)", name:"Maj 13 (#11)", group:"Extended", intervals:[0,4,7,11,2,6,9], require:[0,4,11,6] },
+
+  { sym:"add9", name:"Add 9", group:"Extended", intervals:[0,4,7,2], require:[0,4,2] },
+  { sym:"6add9", name:"6 add 9", group:"Extended", intervals:[0,4,7,9,2], require:[0,4,9,2] },
+  { sym:"maj7(b5)", name:"Maj7 (b5)", group:"Extended", intervals:[0,4,6,11], require:[0,4,11,6] },
+  { sym:"maj7(#5)", name:"Maj7 (#5)", group:"Extended", intervals:[0,4,8,11], require:[0,4,11,8] },
+
+  { sym:"m6", name:"m6", group:"Extended", intervals:[0,3,7,9], require:[0,3,9] },
+  { sym:"m9", name:"m9", group:"Extended", intervals:[0,3,7,10,2], require:[0,3,10,2] },
+  { sym:"m11", name:"m11", group:"Extended", intervals:[0,3,7,10,2,5], require:[0,3,10,5] },
+  { sym:"m13", name:"m13", group:"Extended", intervals:[0,3,7,10,2,5,9], require:[0,3,10,9] },
+  { sym:"m(add9)", name:"m(add9)", group:"Extended", intervals:[0,3,7,2], require:[0,3,2] },
+  { sym:"m6add9", name:"m6add9", group:"Extended", intervals:[0,3,7,9,2], require:[0,3,9,2] },
+  { sym:"mmaj7", name:"mMaj7", group:"Extended", intervals:[0,3,7,11], require:[0,3,11] },
+  { sym:"mmaj9", name:"mMaj9", group:"Extended", intervals:[0,3,7,11,2], require:[0,3,11,2] },
+  { sym:"m7b5", name:"m7b5", group:"Extended", intervals:[0,3,6,10], require:[0,3,10,6] },
+  { sym:"m7#5", name:"m7#5", group:"Extended", intervals:[0,3,8,10], require:[0,3,10,8] },
+
+  { sym:"6", name:"6", group:"Extended", intervals:[0,4,7,9], require:[0,4,9] },
+  { sym:"9", name:"9", group:"Extended", intervals:[0,4,7,10,2], require:[0,4,10,2] },
+  { sym:"11", name:"11", group:"Extended", intervals:[0,4,7,10,2,5], require:[0,4,10,5] },
+  { sym:"13", name:"13", group:"Extended", intervals:[0,4,7,10,2,5,9], require:[0,4,10,9] },
+
+  { sym:"7b5", name:"7 b5", group:"Altered", intervals:[0,4,6,10], require:[0,10,6,4] },
+  { sym:"7#5", name:"7 #5", group:"Altered", intervals:[0,4,8,10], require:[0,10,8,4] },
+  { sym:"7b9", name:"7 b9", group:"Altered", intervals:[0,4,7,10,1], require:[0,10,1,4] },
+  { sym:"7#9", name:"7 #9", group:"Altered", intervals:[0,4,7,10,3], require:[0,10,3,4] },
+  { sym:"7(b5,b9)", name:"7 (b5,b9)", group:"Altered", intervals:[0,4,6,10,1], require:[0,10,6,1] },
+  { sym:"7(b5,#9)", name:"7 (b5,#9)", group:"Altered", intervals:[0,4,6,10,3], require:[0,10,6,3] },
+  { sym:"7(#5,b9)", name:"7 (#5,b9)", group:"Altered", intervals:[0,4,8,10,1], require:[0,10,8,1] },
+  { sym:"7(#5,#9)", name:"7 (#5,#9)", group:"Altered", intervals:[0,4,8,10,3], require:[0,10,8,3] },
+  { sym:"9b5", name:"9 b5", group:"Altered", intervals:[0,4,6,10,2], require:[0,10,2,6] },
+  { sym:"9#5", name:"9 #5", group:"Altered", intervals:[0,4,8,10,2], require:[0,10,2,8] },
+  { sym:"13#11", name:"13 #11", group:"Altered", intervals:[0,4,7,10,2,6,9], require:[0,10,9,6] },
+  { sym:"13b9", name:"13 b9", group:"Altered", intervals:[0,4,7,10,1,9], require:[0,10,9,1] },
+  { sym:"11b9", name:"11 b9", group:"Altered", intervals:[0,4,7,10,1,5], require:[0,10,5,1] },
+  { sym:"sus2sus4", name:"sus2sus4", group:"Altered", intervals:[0,2,5,7], require:[0,2,5,7] },
+  { sym:"-5", name:"-5 (maj b5)", group:"Altered", intervals:[0,4,6], require:[0,4,6] },
+];
+
+// Patterns: prioritise 1–3 and 2–4. 2–5 allowed only if 5th string is root.
+const PATTERNS = [
+  { id:"t123", label:"Triad 1–3", strings:[1,2,3], kind:"triad", weight: 14 },
+  { id:"t234", label:"Triad 2–4", strings:[2,3,4], kind:"triad", weight: 14 },
+  { id:"f1234", label:"4‑note 1–4", strings:[1,2,3,4], kind:"four",  weight: 10 },
+  { id:"f2345", label:"4‑note 2–5 (root on 5th)", strings:[2,3,4,5], kind:"four", rootString: 5, weight: 6 },
+  { id:"b5321", label:"Bass+top 5-3-2-1 (root on 5th)", strings:[5,3,2,1], kind:"four", bassTop:true, rootString:5, weight: 5 },
+  { id:"b6321", label:"Bass+top 6-3-2-1 (root on 6th)", strings:[6,3,2,1], kind:"four", bassTop:true, rootString:6, weight: 4 },
+  { id:"b5432", label:"Bass+2–4 5-4-3-2 (root on 5th)", strings:[5,4,3,2], kind:"four", bassTop:true, rootString:5, weight: 5 },
+  { id:"b6432", label:"Bass+2–4 6-4-3-2 (root on 6th)", strings:[6,4,3,2], kind:"four", bassTop:true, rootString:6, weight: 4 },
+];
+
+/* -------------------------
+   State + persistence
+--------------------------*/
+const LS_KEY = "chordShuffler.v2";
+const defaultState = {
+  enharmonic: "sharp",
+  roots: ROOTS_ORDERED.map(r => r.pc),
+  types: CHORD_TYPES.map(t => t.sym),
+  mode: "deck",
+  auto: "off",
+  seconds: 6,
+  bandLow: 5,
+  bandHigh: 12,
+  maxSpan: 4,
+  preferTop: true,
+  allowBassTop: true,
+  favFirst: true,
+  favOnly: false,
+  showTriads: true,
+  showFour: true,
+  maxShow: 18,
+  favourites: {},
+  presets: [],
+  presetSelected: ""
+};
+let state = loadState();
+let deck = [];
+let current = null;
+let autoTimer = null;
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return structuredClone(defaultState);
+    const parsed = JSON.parse(raw);
+    return { ...structuredClone(defaultState), ...parsed };
+  }catch{
+    return structuredClone(defaultState);
+  }
+}
+function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+/* -------------------------
+   Helpers
+--------------------------*/
+function noteName(pc){ return (state.enharmonic === "flat") ? FLAT_NAMES[pc] : SHARP_NAMES[pc]; }
+function chordTypeDef(sym){ return CHORD_TYPES.find(t => t.sym === sym); }
+function chordLabel(rootPc, typeSym){
+  const root = noteName(rootPc);
+  if(typeSym === "") return `${root} maj`;
+  return `${root} ${typeSym}`.replaceAll("  "," ").trim();
+}
+function pcAt(stringNum, fret){
+  const open = STRING_OPEN_PC[stringNum];
+  return (open + fret) % 12;
+}
+function intervalsPresent(rootPc, fretsByString){
+  const present = new Set();
+  for(const [s, f] of Object.entries(fretsByString)){
+    const fret = Number(f);
+    const pc = pcAt(Number(s), fret);
+    const interval = (pc - rootPc + 12) % 12;
+    present.add(interval);
+  }
+  return present;
+}
+function withinBandAndSpan(fretsByString){
+  const frets = Object.values(fretsByString).map(Number);
+  if(frets.length === 0) return false;
+  const minF = Math.min(...frets), maxF = Math.max(...frets);
+  if(minF < state.bandLow) return false;
+  if(maxF > state.bandHigh) return false;
+  if((maxF - minF) > state.maxSpan) return false;
+  return true;
+}
+function minNotesNeeded(typeDef){
+  const allowRootOmit = (typeDef.require.length >= 3);
+  if(!allowRootOmit) return typeDef.require.length;
+  const core = typeDef.require.filter(iv => iv !== 0);
+  return Math.max(2, core.length);
+}
+
+function meetsChordRequirements(rootPc, typeDef, pattern, fretsByString){
+  const present = intervalsPresent(rootPc, fretsByString);
+  const noteCount = Object.keys(fretsByString).length;
+
+  const allowRootOmit = (typeDef.require.length >= 3);
+  let must = typeDef.require.slice();
+  if(allowRootOmit) must = must.filter(iv => iv !== 0);
+  if(noteCount < must.length) return false;
+
+  for(const req of must){
+    if(!present.has(req)) return false;
+  }
+
+  if(pattern?.rootString){
+    const s = pattern.rootString;
+    const f = fretsByString[s];
+    if(f === undefined) return false;
+    const interval = (pcAt(s, f) - rootPc + 12) % 12;
+    if(interval !== 0) return false;
+  }
+
+  if(!allowRootOmit && typeDef.require.includes(0) && !present.has(0)) return false;
+  return true;
+}
+
+function scoreVoicing(rootPc, typeDef, pattern, fretsByString){
+  const present = intervalsPresent(rootPc, fretsByString);
+  let score = 0;
+
+  // Root optional: small reward if present
+  if(present.has(0)) score += 2;
+
+  // Reward quality tones (don't heavily reward the root)
+  for(const req of typeDef.require){
+    if(req === 0) continue;
+    if(present.has(req)) score += 6;
+  }
+
+  score += Math.min(present.size, 6) * 2;
+  score += pattern.weight || 0;
+
+  // span reward
+  const frets = Object.values(fretsByString).map(Number);
+  const span = Math.max(...frets) - Math.min(...frets);
+  score += (state.maxSpan - span) * 1.3;
+
+  return score;
+}
+
+/* -------------------------
+   Voicing generation
+--------------------------*/
+function possibleFretsForString(rootPc, typeDef, stringNum){
+  const allowedPC = new Set(typeDef.intervals.map(iv => (rootPc + iv) % 12));
+  const out = [];
+  for(let f = state.bandLow; f <= state.bandHigh; f++){
+    const pc = pcAt(stringNum, f);
+    if(allowedPC.has(pc)) out.push(f);
+  }
+  return out;
+}
+
+function generateVoicings(rootPc, typeSym){
+  const typeDef = chordTypeDef(typeSym);
+  if(!typeDef) return [];
+
+  const patterns = PATTERNS.filter(p => {
+    if(p.kind === "triad" && !state.showTriads) return false;
+    if(p.kind === "four" && !state.showFour) return false;
+    if(p.bassTop && !state.allowBassTop) return false;
+    return true;
+  });
+
+  const results = [];
+  const seen = new Set();
+
+  for(const pattern of patterns){
+    if(pattern.strings.length < minNotesNeeded(typeDef)) continue;
+
+    const choices = pattern.strings.map(s => possibleFretsForString(rootPc, typeDef, s));
+    if(choices.some(arr => arr.length === 0)) continue;
+
+    const pick = (idx, acc) => {
+      if(idx === pattern.strings.length){
+        if(!withinBandAndSpan(acc)) return;
+        if(!meetsChordRequirements(rootPc, typeDef, pattern, acc)) return;
+
+        const frets6 = [];
+        for(let s=6; s>=1; s--) frets6.push(acc[s] ?? "x");
+        const key = `${typeSym}|${rootPc}|${frets6.join(",")}|${pattern.id}`;
+        if(seen.has(key)) return;
+        seen.add(key);
+
+        const accCopy = { ...acc };
+        const sc = scoreVoicing(rootPc, typeDef, pattern, accCopy);
+        results.push({ rootPc, typeSym, pattern, fretsByString: accCopy, score: sc });
+        return;
+      }
+      const s = pattern.strings[idx];
+      for(const f of choices[idx]){
+        acc[s] = f;
+        pick(idx + 1, acc);
+        delete acc[s];
+      }
+    };
+    pick(0, {});
+  }
+
+  results.sort((a,b) => b.score - a.score);
+  return results;
+}
+
+/* -------------------------
+   SVGuitar rendering
+--------------------------*/
+function voicingId(v){
+  const frets6 = [];
+  for(let s=6; s>=1; s--) frets6.push(v.fretsByString[s] ?? "x");
+  return `${v.rootPc}|${v.typeSym}|${v.pattern.id}|${frets6.join(",")}`;
+}
+
+function fretsSummary(v){
+  const names = {6:"E",5:"A",4:"D",3:"G",2:"B",1:"e"};
+  const parts = [];
+  for(let s=6; s>=1; s--){
+    const f = v.fretsByString[s];
+    parts.push(`${names[s]}:${f ?? "x"}`);
+  }
+  return parts.join("  ");
+}
+
+function buildSvguitarChord(v){
+  const used = Object.values(v.fretsByString).map(Number);
+  const pos = Math.min(...used);
+  const fretsOnChart = Math.max(state.maxSpan, 4);
+
+  const fingers = [];
+  for(let s=1; s<=6; s++){
+    const abs = v.fretsByString[s];
+    if(abs === undefined) fingers.push([s, "x"]);
+    else fingers.push([s, (abs - pos + 1)]);
+  }
+  return { title: v.pattern.label, position: pos, fingers, fretsOnChart };
+}
+
+function renderVoicings(list){
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+
+  let out = list.slice();
+  if(state.favOnly) out = out.filter(v => !!state.favourites[voicingId(v)]);
+  if(state.favFirst){
+    out.sort((a,b) => {
+      const fa = !!state.favourites[voicingId(a)];
+      const fb = !!state.favourites[voicingId(b)];
+      if(fa !== fb) return (fb - fa);
+      return b.score - a.score;
+    });
+  }
+
+  const maxShow = Math.max(4, Math.min(200, Number(state.maxShow) || 18));
+  const shown = out.slice(0, maxShow);
+  document.getElementById("voicingCount").textContent = String(shown.length);
+
+  // If SVGuitar failed to load, show a friendly message
+  if(typeof svguitar === "undefined"){
+    const warn = document.createElement("div");
+    warn.className = "hint";
+    warn.textContent = "SVGuitar didn’t load (no internet / blocked). You can still see fret summaries below each card.";
+    cards.appendChild(warn);
+  }
+
+  const css = getComputedStyle(document.documentElement);
+  const ink = css.getPropertyValue('--text').trim() || '#e8ecf4';
+  const accent = css.getPropertyValue('--accent').trim() || ink;
+
+  for(const v of shown){
+    const id = voicingId(v);
+    const isFav = !!state.favourites[id];
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const top = document.createElement("div");
+    top.className = "cardTop";
+
+    const left = document.createElement("div");
+    left.className = "mono";
+    left.textContent = v.pattern.label;
+
+    const star = document.createElement("div");
+    star.className = "star" + (isFav ? " on" : "");
+    star.textContent = isFav ? "★" : "☆";
+    star.onclick = () => {
+      const now = !!state.favourites[id];
+      if(now) delete state.favourites[id];
+      else state.favourites[id] = true;
+      saveState();
+      renderVoicings(list);
+    };
+
+    top.appendChild(left);
+    top.appendChild(star);
+
+    const svgWrap = document.createElement("div");
+    svgWrap.className = "svgWrap";
+    const svgContainer = document.createElement("div");
+    svgContainer.style.width = "220px";
+    svgWrap.appendChild(svgContainer);
+
+    const info = document.createElement("div");
+    info.className = "mono";
+    info.textContent = fretsSummary(v);
+
+    card.appendChild(top);
+    card.appendChild(svgWrap);
+    card.appendChild(info);
+    cards.appendChild(card);
+
+    if(typeof svguitar !== "undefined"){
+      const chordObj = buildSvguitarChord(v);
+      const chart = new svguitar.SVGuitarChord(svgContainer);
+      chart.configure({
+        orientation: "vertical",
+        style: "normal",
+        strings: 6,
+        frets: chordObj.fretsOnChart,
+        titleFontSize: 12,
+        fretLabelPosition: "left",
+        fretLabelFontSize: 10,
+
+        // visible on dark UI:
+        color: ink,
+        stringColor: ink,
+        fretColor: ink,
+        fretLabelColor: ink,
+        tuningsColor: ink,
+        backgroundColor: "none",
+        fingerColor: accent,
+        fingerStrokeColor: ink,
+        fingerStrokeWidth: 1,
+        fingerSize: 0.82,
+        strokeWidth: 2,
+      }).chord({
+        title: chordObj.title,
+        position: chordObj.position,
+        fingers: chordObj.fingers,
+        barres: [],
+        capo: false
+      }).draw();
+    }
+  }
+}
+
+/* -------------------------
+   Deck/random selection
+--------------------------*/
+function pool(){
+  const combos = [];
+  for(const r of state.roots){
+    for(const t of state.types){
+      combos.push({ rootPc: r, typeSym: t });
+    }
+  }
+  return combos;
+}
+function rebuildDeck(){
+  deck = pool();
+  for(let i = deck.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+}
+function nextChord(){
+  const combos = pool();
+  if(combos.length === 0){
+    current = null;
+    document.getElementById("currentChord").textContent = "—";
+    document.getElementById("poolInfo").textContent = "Pick some roots & types…";
+    return;
+  }
+  if(state.mode === "deck"){
+    if(deck.length === 0) rebuildDeck();
+    current = deck.pop();
+    document.getElementById("poolInfo").textContent = `Deck: ${deck.length} remaining`;
+  }else{
+    current = combos[Math.floor(Math.random() * combos.length)];
+    document.getElementById("poolInfo").textContent = `Pool: ${combos.length} chords`;
+  }
+  document.getElementById("currentChord").textContent = chordLabel(current.rootPc, current.typeSym);
+}
+
+function clearDiagrams(){
+  document.getElementById("cards").innerHTML = "";
+  document.getElementById("voicingCount").textContent = "0";
+}
+
+/* -------------------------
+   Auto advance
+--------------------------*/
+function stopAuto(){
+  if(autoTimer) clearInterval(autoTimer);
+  autoTimer = null;
+  document.getElementById("timerInfo").style.display = "none";
+}
+function startAuto(){
+  stopAuto();
+  if(state.auto !== "on") return;
+  const sec = Math.max(1, Number(state.seconds) || 6);
+  const el = document.getElementById("timerInfo");
+  el.style.display = "inline-flex";
+  el.textContent = `auto: ${sec}s`;
+  autoTimer = setInterval(() => {
+    clearDiagrams();
+    nextChord();
+  }, sec * 1000);
+}
+
+/* -------------------------
+   Presets
+--------------------------*/
+function refreshPresetSelect(){
+  const sel = document.getElementById("presetSelect");
+  sel.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = "— none —";
+  sel.appendChild(opt0);
+
+  for(const p of state.presets){
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.label;
+    sel.appendChild(opt);
+  }
+  sel.value = state.presetSelected || "";
+}
+function savePreset(label){
+  const trimmed = (label || "").trim();
+  if(!trimmed) { alert("Give the preset a label."); return; }
+
+  const subset = {
+    enharmonic: state.enharmonic,
+    roots: state.roots,
+    types: state.types,
+    mode: state.mode,
+    auto: state.auto,
+    seconds: state.seconds,
+    bandLow: state.bandLow,
+    bandHigh: state.bandHigh,
+    maxSpan: state.maxSpan,
+    preferTop: state.preferTop,
+    allowBassTop: state.allowBassTop,
+    favFirst: state.favFirst,
+    favOnly: state.favOnly,
+    showTriads: state.showTriads,
+    showFour: state.showFour,
+    maxShow: state.maxShow
+  };
+  const id = uid();
+  state.presets.unshift({ id, label: trimmed, created: Date.now(), subset });
+  state.presetSelected = id;
+  saveState();
+  refreshPresetSelect();
+}
+function loadPreset(id){
+  const p = state.presets.find(x => x.id === id);
+  if(!p) return;
+  state = { ...state, ...p.subset, presetSelected: id };
+  saveState();
+  renderAllUI();
+}
+function deletePreset(){
+  const id = state.presetSelected;
+  if(!id) { alert("Select a preset first."); return; }
+  const p = state.presets.find(x => x.id === id);
+  if(!p) return;
+  if(!confirm(`Delete preset "${p.label}"?`)) return;
+  state.presets = state.presets.filter(x => x.id !== id);
+  state.presetSelected = "";
+  saveState();
+  refreshPresetSelect();
+}
+
+/* -------------------------
+   UI rendering
+--------------------------*/
+function updatePoolBadge(){
+  document.getElementById("summaryBadge").textContent = `${pool().length} chords in pool`;
+}
+function renderRootChips(){
+  const wrap = document.getElementById("rootChips");
+  wrap.innerHTML = "";
+  for(const r of ROOTS_ORDERED){
+    const label = (state.enharmonic === "flat") ? r.flat : r.sharp;
+    const chip = document.createElement("div");
+    chip.className = "chip" + (state.roots.includes(r.pc) ? " on" : "");
+    chip.textContent = label;
+    chip.onclick = () => {
+      const i = state.roots.indexOf(r.pc);
+      if(i >= 0) state.roots.splice(i,1);
+      else state.roots.push(r.pc);
+      saveState();
+      renderRootChips();
+      updatePoolBadge();
+    };
+    wrap.appendChild(chip);
+  }
+}
+function renderTypeList(){
+  const q = document.getElementById("typeSearch").value.trim().toLowerCase();
+  const list = document.getElementById("typeList");
+  list.innerHTML = "";
+
+  const filtered = CHORD_TYPES.filter(t => {
+    if(!q) return true;
+    const hay = `${t.sym} ${t.name} ${t.group}`.toLowerCase();
+    return hay.includes(q);
+  });
+
+  const groups = ["Basic","Extended","Altered"];
+  for(const g of groups){
+    const section = filtered.filter(t => t.group === g);
+    if(section.length === 0) continue;
+
+    const h = document.createElement("div");
+    h.className = "hint";
+    h.style.margin = "8px 0 2px";
+    h.textContent = g;
+    list.appendChild(h);
+
+    for(const t of section){
+      const item = document.createElement("label");
+      item.className = "type-item";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = state.types.includes(t.sym);
+      cb.onchange = () => {
+        if(cb.checked){
+          if(!state.types.includes(t.sym)) state.types.push(t.sym);
+        }else{
+          state.types = state.types.filter(x => x !== t.sym);
+        }
+        saveState();
+        updatePoolBadge();
+        rebuildDeck();
+      };
+
+      const meta = document.createElement("div");
+      meta.className = "type-meta";
+
+      const title = document.createElement("div");
+      title.className = "type-title";
+      title.textContent = (t.sym === "") ? "maj (Major)" : `${t.sym} (${t.name})`;
+
+      const sub = document.createElement("div");
+      sub.className = "type-sub";
+      sub.textContent = `Core tones: ${t.require.filter(iv=>iv!==0).length} • pattern rules apply`;
+
+      meta.appendChild(title);
+      meta.appendChild(sub);
+
+      item.appendChild(cb);
+      item.appendChild(meta);
+      list.appendChild(item);
+    }
+  }
+}
+function renderToggles(){
+  document.getElementById("btnEnhSharp").classList.toggle("on", state.enharmonic === "sharp");
+  document.getElementById("btnEnhFlat").classList.toggle("on", state.enharmonic === "flat");
+
+  document.getElementById("btnPreferTop").classList.toggle("on", !!state.preferTop);
+  document.getElementById("btnBassTop").classList.toggle("on", !!state.allowBassTop);
+  document.getElementById("btnFavFirst").classList.toggle("on", !!state.favFirst);
+  document.getElementById("btnFavOnly").classList.toggle("on", !!state.favOnly);
+  document.getElementById("btnShowTriads").classList.toggle("on", !!state.showTriads);
+  document.getElementById("btnShowFour").classList.toggle("on", !!state.showFour);
+
+  document.getElementById("modeSelect").value = state.mode;
+  document.getElementById("autoSelect").value = state.auto;
+  document.getElementById("secondsInput").value = state.seconds;
+  document.getElementById("bandLow").value = state.bandLow;
+  document.getElementById("bandHigh").value = state.bandHigh;
+  document.getElementById("maxSpan").value = state.maxSpan;
+  document.getElementById("maxShow").value = state.maxShow;
+}
+function renderAllUI(){
+  renderToggles();
+  renderRootChips();
+  renderTypeList();
+  updatePoolBadge();
+  refreshPresetSelect();
+}
+
+/* -------------------------
+   Tabs + wiring
+--------------------------*/
+function setTab(which){
+  const setup = document.getElementById("setupView");
+  const trainer = document.getElementById("trainerView");
+  const tSetup = document.getElementById("tabSetup");
+  const tTrainer = document.getElementById("tabTrainer");
+
+  if(which === "setup"){
+    setup.style.display = "";
+    trainer.style.display = "none";
+    tSetup.classList.add("on");
+    tTrainer.classList.remove("on");
+  }else{
+    setup.style.display = "none";
+    trainer.style.display = "";
+    tSetup.classList.remove("on");
+    tTrainer.classList.add("on");
+  }
+}
+document.getElementById("tabSetup").onclick = () => setTab("setup");
+document.getElementById("tabTrainer").onclick = () => setTab("trainer");
+document.getElementById("btnGoTrainer").onclick = () => setTab("trainer");
+document.getElementById("btnBackSetup").onclick = () => setTab("setup");
+
+document.getElementById("btnEnhSharp").onclick = () => { state.enharmonic = "sharp"; saveState(); renderAllUI(); };
+document.getElementById("btnEnhFlat").onclick  = () => { state.enharmonic = "flat";  saveState(); renderAllUI(); };
+
+document.getElementById("btnAllRoots").onclick  = () => { state.roots = ROOTS_ORDERED.map(r => r.pc); saveState(); renderAllUI(); rebuildDeck(); };
+document.getElementById("btnNoneRoots").onclick = () => { state.roots = []; saveState(); renderAllUI(); rebuildDeck(); };
+
+document.getElementById("btnAllTypes").onclick  = () => { state.types = CHORD_TYPES.map(t => t.sym); saveState(); renderAllUI(); rebuildDeck(); };
+document.getElementById("btnNoneTypes").onclick = () => { state.types = []; saveState(); renderAllUI(); rebuildDeck(); };
+
+document.getElementById("btnBasic").onclick = () => {
+  const set = CHORD_TYPES.filter(t => t.group==="Basic").map(t => t.sym);
+  state.types = [...new Set([...state.types, ...set])];
+  saveState(); renderAllUI(); rebuildDeck();
+};
+document.getElementById("btnExtended").onclick = () => {
+  const set = CHORD_TYPES.filter(t => t.group==="Extended").map(t => t.sym);
+  state.types = [...new Set([...state.types, ...set])];
+  saveState(); renderAllUI(); rebuildDeck();
+};
+document.getElementById("btnAltered").onclick = () => {
+  const set = CHORD_TYPES.filter(t => t.group==="Altered").map(t => t.sym);
+  state.types = [...new Set([...state.types, ...set])];
+  saveState(); renderAllUI(); rebuildDeck();
+};
+document.getElementById("typeSearch").oninput = () => renderTypeList();
+
+document.getElementById("modeSelect").onchange = (e) => { state.mode = e.target.value; saveState(); rebuildDeck(); updatePoolBadge(); };
+document.getElementById("autoSelect").onchange = (e) => { state.auto = e.target.value; saveState(); startAuto(); };
+document.getElementById("secondsInput").oninput = (e) => { state.seconds = Number(e.target.value)||6; saveState(); startAuto(); };
+document.getElementById("bandLow").oninput = (e) => { state.bandLow = Number(e.target.value)||1; saveState(); };
+document.getElementById("bandHigh").oninput = (e) => { state.bandHigh = Number(e.target.value)||12; saveState(); };
+document.getElementById("maxSpan").oninput = (e) => { state.maxSpan = Number(e.target.value)||4; saveState(); };
+document.getElementById("maxShow").oninput = (e) => { state.maxShow = Number(e.target.value)||18; saveState(); };
+
+document.getElementById("btnPreferTop").onclick = () => { state.preferTop = !state.preferTop; saveState(); renderToggles(); };
+document.getElementById("btnBassTop").onclick = () => { state.allowBassTop = !state.allowBassTop; saveState(); renderToggles(); };
+document.getElementById("btnFavFirst").onclick = () => { state.favFirst = !state.favFirst; saveState(); renderToggles(); };
+document.getElementById("btnFavOnly").onclick = () => { state.favOnly = !state.favOnly; saveState(); renderToggles(); };
+
+document.getElementById("btnShowTriads").onclick = () => { state.showTriads = !state.showTriads; saveState(); renderToggles(); };
+document.getElementById("btnShowFour").onclick = () => { state.showFour = !state.showFour; saveState(); renderToggles(); };
+
+document.getElementById("btnSavePreset").onclick = () => {
+  const label = document.getElementById("presetLabel").value;
+  savePreset(label);
+  document.getElementById("presetLabel").value = "";
+};
+document.getElementById("presetSelect").onchange = (e) => {
+  state.presetSelected = e.target.value;
+  saveState();
+  if(e.target.value) loadPreset(e.target.value);
+};
+document.getElementById("btnDeletePreset").onclick = () => deletePreset();
+
+document.getElementById("btnPlay").onclick = () => { clearDiagrams(); rebuildDeck(); nextChord(); startAuto(); };
+document.getElementById("btnNext").onclick = () => { clearDiagrams(); nextChord(); };
+document.getElementById("btnDisplay").onclick = () => {
+  if(!current) return;
+  const list = generateVoicings(current.rootPc, current.typeSym);
+  renderVoicings(list);
+};
+document.getElementById("btnClearDiagrams").onclick = () => clearDiagrams();
+
+/* -------------------------
+   Init
+--------------------------*/
+renderAllUI();
+rebuildDeck();
+startAuto();
+</script>
+</body>
+</html>
