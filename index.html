@@ -165,8 +165,10 @@
       min-height: 240px;
     }
     .cardTop{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; color: var(--muted); }
-    .star{ cursor:pointer; user-select:none; font-size: 16px; opacity: .9; }
+.cardHeader{ font-size: 20px; font-weight: 700; line-height: 1.12; }
+.cardSubHeader{ font-size: 14px; color: var(--muted); margin-top: 2px; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; color: var(--muted); }
+    .star{ cursor:pointer; user-select:none; font-size: 26px; opacity: .9; }
     .star.on{ color: var(--warn); }
     .svgWrap{ display:flex; justify-content:center; align-items:center; min-height: 170px; }
     .badge{
@@ -716,6 +718,39 @@ function fretsSummary(v){
   return parts.join("  ");
 }
 
+function degreeLabel(typeSym, interval){
+  const has9 = /9/.test(typeSym) || /add9/.test(typeSym);
+  const has11 = /11/.test(typeSym);
+  const has13 = /13/.test(typeSym);
+  const hasb9 = /b9/.test(typeSym);
+  const hasSharp9 = /#9/.test(typeSym);
+  const hasSharp11 = /#11/.test(typeSym);
+  const hasb5 = /b5/.test(typeSym) || /-5/.test(typeSym) || /m7b5/.test(typeSym);
+  const isDim7 = /dim7/.test(typeSym);
+  const isAug = /aug/.test(typeSym) || /#5/.test(typeSym);
+
+  switch(interval){
+    case 0: return "1";
+    case 1: return hasb9 ? "♭9" : "♭2";
+    case 2: return has9 ? "9" : "2";
+    case 3: return hasSharp9 ? "♯9" : "♭3";
+    case 4: return "3";
+    case 5: return has11 ? "11" : "4";
+    case 6:
+      if(hasSharp11) return "♯11";
+      if(hasb5) return "♭5";
+      return "♯4";
+    case 7: return "5";
+    case 8: return isAug ? "♯5" : "♭6";
+    case 9:
+      if(isDim7) return "♭♭7";
+      return has13 ? "13" : "6";
+    case 10: return "♭7";
+    case 11: return "7";
+    default: return String(interval);
+  }
+}
+
 function buildSvguitarChord(v){
   const used = Object.values(v.fretsByString).map(Number);
   const pos = Math.min(...used);
@@ -724,8 +759,14 @@ function buildSvguitarChord(v){
   const fingers = [];
   for(let s=1; s<=6; s++){
     const abs = v.fretsByString[s];
-    if(abs === undefined) fingers.push([s, "x"]);
-    else fingers.push([s, (abs - pos + 1)]);
+    if(abs === undefined){
+      fingers.push([s, "x"]);
+      continue;
+    }
+    const rel = (abs - pos + 1);
+    const interval = (pcAt(s, abs) - v.rootPc + 12) % 12;
+    const label = degreeLabel(v.typeSym, interval);
+    fingers.push([s, rel, label]);
   }
   return { title: v.pattern.label, position: pos, fingers, fretsOnChart };
 }
@@ -760,6 +801,7 @@ function renderVoicings(list){
   const css = getComputedStyle(document.documentElement);
   const ink = css.getPropertyValue('--text').trim() || '#e8ecf4';
   const accent = css.getPropertyValue('--accent').trim() || ink;
+  const bg = css.getPropertyValue('--bg').trim() || '#0b0d12';
 
   for(const v of shown){
     const id = voicingId(v);
@@ -771,11 +813,19 @@ function renderVoicings(list){
     const top = document.createElement("div");
     top.className = "cardTop";
 
-    const left = document.createElement("div");
-    left.className = "mono";
-    left.textContent = v.pattern.label;
+    const textWrap = document.createElement("div");
 
-    const star = document.createElement("div");
+const hdr = document.createElement("div");
+hdr.className = "cardHeader";
+hdr.textContent = chordLabel(v.rootPc, v.typeSym);
+
+const sub = document.createElement("div");
+sub.className = "cardSubHeader";
+sub.textContent = v.pattern.label;
+
+textWrap.appendChild(hdr);
+textWrap.appendChild(sub);
+const star = document.createElement("div");
     star.className = "star" + (isFav ? " on" : "");
     star.textContent = isFav ? "★" : "☆";
     star.onclick = () => {
@@ -786,7 +836,7 @@ function renderVoicings(list){
       renderVoicings(list);
     };
 
-    top.appendChild(left);
+    top.appendChild(textWrap);
     top.appendChild(star);
 
     const svgWrap = document.createElement("div");
@@ -812,9 +862,10 @@ function renderVoicings(list){
         style: "normal",
         strings: 6,
         frets: chordObj.fretsOnChart,
-        titleFontSize: 12,
+        titleFontSize: 22,
         fretLabelPosition: "left",
-        fretLabelFontSize: 10,
+        fretLabelFontSize: 24,
+        sidePadding: 0.28,
 
         // visible on dark UI:
         color: ink,
@@ -824,9 +875,11 @@ function renderVoicings(list){
         tuningsColor: ink,
         backgroundColor: "none",
         fingerColor: accent,
+        fingerTextColor: bg,
+        fingerTextSize: 20,
         fingerStrokeColor: ink,
         fingerStrokeWidth: 1,
-        fingerSize: 0.82,
+        fingerSize: 0.92,
         strokeWidth: 2,
       }).chord({
         title: chordObj.title,
