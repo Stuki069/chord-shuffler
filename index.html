@@ -168,6 +168,22 @@
 .cardHeader{ font-size: 20px; font-weight: 700; line-height: 1.12; }
 .cardSubHeader{ font-size: 14px; color: var(--muted); margin-top: 2px; }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; color: var(--muted); }
+    .noteGrid{
+      width: 220px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      align-items: center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 8px; /* ~50% smaller than before */
+      line-height: 1.1;
+      color: var(--muted);
+    }
+    .noteCell{
+      text-align: center;
+      min-height: 1em;
+    }
+
     .star{ cursor:pointer; user-select:none; font-size: 26px; opacity: .9; }
     .star.on{ color: var(--warn); }
     .svgWrap{ display:flex; justify-content:center; align-items:center; min-height: 170px; }
@@ -811,27 +827,17 @@ function voicingId(v){
 }
 
 
-function notesSummary(v){
-  // Two-line mono display: string names then note names (blank for muted)
-  const stringNames = {6:"E",5:"A",4:"D",3:"G",2:"B",1:"e"};
-  const cols = [];
+function notesPerString(v){
+  // Notes per string, left-to-right on the diagram: 6(E) 5(A) 4(D) 3(G) 2(B) 1(e)
   const notes = [];
   for(let s=6; s>=1; s--){
     const f = v.fretsByString[s];
-    cols.push(stringNames[s]);
-    if(f === undefined){
-      notes.push("");
-    }else{
-      const pc = pcAt(s, f);
-      notes.push(noteName(pc));
-    }
+    if(f === undefined) notes.push("");
+    else notes.push(noteName(pcAt(s, f)));
   }
-  const pad = (str, w) => (str + " ".repeat(w)).slice(0, w);
-  const w = 4; // column width
-  const header = cols.map(x => pad(x, w)).join("");
-  const body = notes.map(x => pad(x, w)).join("");
-  return header.trimEnd() + "\n" + body.trimEnd();
+  return notes;
 }
+
 
 
 function degreeLabel(typeSym, interval){
@@ -870,7 +876,7 @@ function degreeLabel(typeSym, interval){
 
 function addPositionLabel(svgContainer, position, ink, fontSizePx){
   // SVGuitar aligns the fret label to the top line; guitarists expect it aligned to the first fret *space*.
-  // So we hide SVGuitar's fret label and draw our own at the midpoint between the first two fret lines.
+  // So we hide SVGuitar's fret label and draw our own aligned to the 2nd fret line down (first fret line).
   if(!position) return;
   const svg = svgContainer.querySelector("svg");
   if(!svg) return;
@@ -889,7 +895,7 @@ function addPositionLabel(svgContainer, position, ink, fontSizePx){
 
   const ys = Array.from(new Set(horiz.map(l => Math.round((l.y1.baseVal.value)*100)/100))).sort((a,b)=>a-b);
   if(ys.length < 2) return;
-  const yMid = (ys[0] + ys[1]) / 2;
+  const yLine = ys[1];
 
   const vert = lines.filter(l => {
     const x1 = l.x1?.baseVal?.value ?? NaN;
@@ -902,13 +908,14 @@ function addPositionLabel(svgContainer, position, ink, fontSizePx){
   }
   if(!isFinite(xLeft)) xLeft = 0;
 
-  const x = xLeft - 12; // push left so it never sits on top of the E string
+  const x = xLeft - Math.max(18, fontSizePx * 0.9); // push left so it never sits on top of the E string
 
   const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
   t.setAttribute("class", "posLabel");
   t.setAttribute("x", String(x));
-  // baseline tweak so the text sits nicely centred in the first fret space
-  t.setAttribute("y", String(yMid + fontSizePx * 0.35));
+  // align label to the first fret line
+  t.setAttribute("y", String(yLine));
+  t.setAttribute("dominant-baseline", "middle");
   t.setAttribute("text-anchor", "end");
   t.setAttribute("font-size", String(fontSizePx));
   t.setAttribute("fill", ink);
@@ -1269,13 +1276,19 @@ function renderVoicingCards(list, cardsId, countId, applyTrainerFilters){
     svgContainer.style.width = "220px";
     svgWrap.appendChild(svgContainer);
 
-    const info = document.createElement("div");
-    info.className = "notesMono";
-    info.textContent = notesSummary(v);
+    const noteGrid = document.createElement("div");
+    noteGrid.className = "noteGrid";
+    const notes = notesPerString(v);
+    for(const n of notes){
+      const cell = document.createElement("div");
+      cell.className = "noteCell";
+      cell.textContent = n;
+      noteGrid.appendChild(cell);
+    }
 
     card.appendChild(hdrWrap);
     card.appendChild(svgWrap);
-    card.appendChild(info);
+    card.appendChild(noteGrid);
     cards.appendChild(card);
 
     if(typeof svguitar !== "undefined"){
@@ -1289,7 +1302,7 @@ function renderVoicingCards(list, cardsId, countId, applyTrainerFilters){
         titleFontSize: 0,
         fretLabelPosition: "left",
         fretLabelFontSize: 0,
-        sidePadding: 0.28,
+        sidePadding: 0.45,
         fretLabelColor: "transparent",
         color: ink,
         stringColor: ink,
@@ -1310,7 +1323,7 @@ function renderVoicingCards(list, cardsId, countId, applyTrainerFilters){
         capo: false
       }).draw();
 
-      addPositionLabel(svgContainer, chordObj.position, ink, 14);
+      addPositionLabel(svgContainer, chordObj.position, ink, 25);
     }
   }
 }
