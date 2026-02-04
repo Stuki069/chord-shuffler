@@ -830,8 +830,7 @@ function notesSummary(v){
   const w = 4; // column width
   const header = cols.map(x => pad(x, w)).join("");
   const body = notes.map(x => pad(x, w)).join("");
-  return header.trimEnd() + "
-" + body.trimEnd();
+  return header.trimEnd() + "\n" + body.trimEnd();
 }
 
 
