@@ -169,33 +169,23 @@
 .cardSubHeader{ font-size: 14px; color: var(--muted); margin-top: 2px; }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; color: var(--muted); }
     .noteRow{
-      margin: 0 auto;
+      margin: 2px auto 0;
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       justify-items: center;
       align-items: center;
+      padding: 0 18px; /* approximate string margins */
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1.1;
       color: var(--muted);
     }
-    .noteRow.aligned{
-      position: relative;
-      display: block;
-      height: 1.6em;
-    }
-    .noteRow.aligned .noteLabel{
-      text-align: center;
-      min-height: 1em;
-    }
-
-
     .noteLabel{
       text-align: center;
       min-height: 1em;
+      white-space: nowrap;
     }
-
-    .star{ cursor:pointer; user-select:none; font-size: 26px; opacity: .9; }
+.star{ cursor:pointer; user-select:none; font-size: 26px; opacity: .9; }
     .star.on{ color: var(--warn); }
     .svgWrap{ display:flex; justify-content:center; align-items:center; min-height: 170px; }
     .badge{
@@ -226,7 +216,7 @@
 <header>
   <h1>
     Chord Shuffler
-    <span class="pill">triads + 4‑note voicings • prioritise 1–3 & 2–4</span>
+    <span class="pill">build v6 • triads + 4‑note voicings • prioritise 1–3 & 2–4</span>
   </h1>
 </header>
 
@@ -969,7 +959,7 @@ function positionNoteLabels(svgContainer, noteRow){
     const labels = Array.from(noteRow.querySelectorAll('.noteLabel'));
     if(labels.length !== 6) return;
     // Switch to absolute positioning mode
-    noteRow.classList.add("aligned");
+    noteRow.classList.add("aligned_DISABLED");
 
     const lines = Array.from(svg.querySelectorAll("line"));
     const xs = [];
@@ -1411,9 +1401,17 @@ function renderVoicingCards(list, cardsId, countId, applyTrainerFilters){
         _svg.style.height = "auto";
         _svg.style.display = "block";
       }
-      // Defer alignment/labels one frame so layout has settled
+      // Ensure the rendered SVG scales to the container (prevents tiny diagrams on some browsers)
+      const _svg = svgContainer.querySelector("svg");
+      if(_svg){
+        _svg.removeAttribute("width");
+        _svg.removeAttribute("height");
+        _svg.style.width = "100%";
+        _svg.style.height = "auto";
+        _svg.style.display = "block";
+      }
+      // Defer the position label one frame so layout has settled
       requestAnimationFrame(() => {
-        positionNoteLabels(svgContainer, noteRow);
         addPositionLabel(svgContainer, chordObj.position, ink, 25);
       });
 // Align note labels to the actual string positions in the rendered SVG
