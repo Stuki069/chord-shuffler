@@ -62,7 +62,7 @@
       background: rgba(255,255,255,.03);
       cursor:pointer;
       font-size: 13px;
-      color: var(--muted);
+      color: var(--text);
       user-select:none;
     }
     .tab.on{
@@ -104,6 +104,7 @@
       padding: 10px 12px;
       cursor:pointer;
       user-select:none;
+          color: var(--text);
     }
     .btn.small{ padding:6px 10px; border-radius: 10px; font-size: 12px; }
     .btn.primary{ background: rgba(122,162,255,.18); border-color: rgba(122,162,255,.35); }
@@ -187,7 +188,7 @@
     }
 .star{ cursor:pointer; user-select:none; font-size: 26px; opacity: .9; }
     .star.on{ color: var(--warn); }
-    .svgWrap{ display:flex; justify-content:center; align-items:center; min-height: 170px; }
+    .svgWrap{ display:flex; justify-content:center; align-items:center; min-height: 230px; }
     .badge{
       font-size: 11px;
       padding: 4px 8px;
@@ -216,7 +217,7 @@
 <header>
   <h1>
     Chord Shuffler
-    <span class="pill">build v6 • triads + 4‑note voicings • prioritise 1–3 & 2–4</span>
+    <span class="pill">build diag340 • build v6 • triads + 4‑note voicings • prioritise 1–3 & 2–4</span>
   </h1>
 </header>
 
@@ -1344,12 +1345,14 @@ function renderVoicingCards(list, cardsId, countId, applyTrainerFilters){
     const svgWrap = document.createElement("div");
     svgWrap.className = "svgWrap";
     const svgContainer = document.createElement("div");
-    svgContainer.style.width = "260px";
+    svgContainer.style.width = "100%";
+    svgContainer.style.maxWidth = "340px";
     svgWrap.appendChild(svgContainer);
 
     const noteRow = document.createElement("div");
     noteRow.className = "noteRow";
-    noteRow.style.width = svgContainer.style.width;
+    noteRow.style.width = "100%";
+    noteRow.style.maxWidth = "340px";
     const notes = notesPerString(v);
     for(const n of notes){
       const cell = document.createElement("div");
