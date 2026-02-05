@@ -105,7 +105,7 @@
       cursor:pointer;
       user-select:none;
           color: var(--text);
-    }
+}
     .btn.small{ padding:6px 10px; border-radius: 10px; font-size: 12px; }
     .btn.primary{ background: rgba(122,162,255,.18); border-color: rgba(122,162,255,.35); }
     .btn.warn{ background: rgba(255,210,122,.14); border-color: rgba(255,210,122,.35); }
@@ -119,7 +119,8 @@
       cursor:pointer;
       font-size: 13px;
       user-select:none;
-    }
+          color: var(--text);
+}
     .chip.on{ background: rgba(122,162,255,.22); border-color: rgba(122,162,255,.45); }
 
     .field{ display:flex; flex-direction:column; gap:6px; min-width: 170px; }
@@ -152,7 +153,7 @@
     .bigChord{ font-size: 34px; font-weight: 700; letter-spacing: .3px; }
     .cards{
       display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
       gap: 12px;
     }
     .card{
@@ -170,16 +171,27 @@
 .cardSubHeader{ font-size: 14px; color: var(--muted); margin-top: 2px; }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; color: var(--muted); }
     .noteRow{
-      margin: 2px auto 0;
+      margin: 6px auto 0;
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       justify-items: center;
       align-items: center;
-      padding: 0 18px; /* approximate string margins */
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 11px;
+      font-size: 12px;
       line-height: 1.1;
       color: var(--muted);
+    }
+    .noteRow.aligned{
+      position: relative;
+      display: block;
+      height: 1.6em;
+      margin-top: 6px;
+    }
+    .noteRow.aligned .noteLabel{
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      white-space: nowrap;
     }
     .noteLabel{
       text-align: center;
@@ -217,7 +229,7 @@
 <header>
   <h1>
     Chord Shuffler
-    <span class="pill">build diag340 • build v6 • triads + 4‑note voicings • prioritise 1–3 & 2–4</span>
+    <span class="pill">build v7 • build v6 • triads + 4‑note voicings • prioritise 1–3 & 2–4</span>
   </h1>
 </header>
 
@@ -957,66 +969,66 @@ function positionNoteLabels(svgContainer, noteRow){
     const svg = svgContainer.querySelector("svg");
     if(!svg || !noteRow) return;
 
-    const labels = Array.from(noteRow.querySelectorAll('.noteLabel'));
+    const labels = Array.from(noteRow.querySelectorAll(".noteLabel"));
     if(labels.length !== 6) return;
-    // Switch to absolute positioning mode
-    noteRow.classList.add("aligned_DISABLED");
 
+    // Collect vertical string lines (x1 ~ x2, long length)
     const lines = Array.from(svg.querySelectorAll("line"));
     const xs = [];
-
     for(const ln of lines){
       const x1 = parseFloat(ln.getAttribute("x1"));
       const x2 = parseFloat(ln.getAttribute("x2"));
       const y1 = parseFloat(ln.getAttribute("y1"));
       const y2 = parseFloat(ln.getAttribute("y2"));
       if(!isFinite(x1)||!isFinite(x2)||!isFinite(y1)||!isFinite(y2)) continue;
-
-      // String lines are vertical (x1≈x2) and reasonably tall
-      if(Math.abs(x1 - x2) < 0.2 && Math.abs(y1 - y2) > 8){
+      if(Math.abs(x1 - x2) < 0.2 && Math.abs(y1 - y2) > 18){
         xs.push(x1);
       }
     }
 
-    // Unique Xs in SVG coordinate space
-    let unique = Array.from(new Set(xs.map(x => Math.round(x)))).sort((a,b) => a-b);
+    // Unique & sorted X positions in SVG coords
+    let unique = Array.from(new Set(xs.map(x => Math.round(x)))).sort((a,b)=>a-b);
 
-    // If we captured borders or extras, drop extremes until we have 6
-    while(unique.length > 6){
-      unique.shift();
-      if(unique.length > 6) unique.pop();
+    // Try to keep the 6 most central lines if extras were captured
+    if(unique.length > 6){
+      const mid = Math.floor(unique.length/2);
+      const start = Math.max(0, mid-3);
+      unique = unique.slice(start, start+6);
     }
 
+    // Determine viewBox width in SVG coords
+    const vb = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal : null;
+    const viewW = (vb && vb.width) ? vb.width : null;
+
+    // Pixel width of rendered SVG (prefer container if svg is reporting tiny width)
     const rect = svg.getBoundingClientRect();
     const rectW = rect.width || 0;
     const contW = svgContainer.clientWidth || 0;
-    const svgWpx = (rectW >= 140 ? rectW : (contW || rectW || 260));
+    const svgWpx = (rectW >= 160 ? rectW : (contW || rectW || 340));
 
-    // Determine viewBox width (SVG coordinate space)
-    const vb = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal : null;
-    const vbW = (vb && vb.width) ? vb.width : null;
-    const fallbackW = 200;
-    const viewW = vbW || fallbackW;
-
-    // If we couldn't find 6 strings, fall back to evenly spaced positions
-    if(unique.length !== 6){
-      unique = Array.from({length:6}, (_,i) => (viewW * (i+1) / 7));
+    // Fallback to equal spacing if we couldn't reliably detect 6 strings
+    if(unique.length !== 6 || !viewW){
+      noteRow.classList.remove("aligned");
+      noteRow.style.width = svgWpx + "px";
+      noteRow.style.display = "grid";
+      return;
     }
 
-    // Scale SVG coords -> pixels
-    const scale = svgWpx / viewW;
-
-    // Ensure noteRow matches the rendered SVG width
+    // Switch to aligned absolute positioning
+    noteRow.classList.add("aligned");
     noteRow.style.width = svgWpx + "px";
 
-    // labels already captured above
-    for(let i=0; i<6 && i<labels.length; i++){
+    const scale = svgWpx / viewW;
+    for(let i=0; i<6; i++){
       const xPx = unique[i] * scale;
       labels[i].style.left = xPx + "px";
     }
   }catch(e){
-    // If anything goes wrong, fall back to the grid layout
-    noteRow && noteRow.classList.remove("aligned");
+    // Fall back to grid
+    try{
+      noteRow.classList.remove("aligned");
+      noteRow.style.display = "grid";
+    }catch{}
   }
 }
 
@@ -1345,14 +1357,13 @@ function renderVoicingCards(list, cardsId, countId, applyTrainerFilters){
     const svgWrap = document.createElement("div");
     svgWrap.className = "svgWrap";
     const svgContainer = document.createElement("div");
-    svgContainer.style.width = "100%";
-    svgContainer.style.maxWidth = "340px";
+    svgContainer.style.width = "340px";
+    svgContainer.style.maxWidth = "100%";
     svgWrap.appendChild(svgContainer);
 
     const noteRow = document.createElement("div");
     noteRow.className = "noteRow";
-    noteRow.style.width = "100%";
-    noteRow.style.maxWidth = "340px";
+    noteRow.style.width = svgContainer.style.width;
     const notes = notesPerString(v);
     for(const n of notes){
       const cell = document.createElement("div");
@@ -1408,6 +1419,8 @@ function renderVoicingCards(list, cardsId, countId, applyTrainerFilters){
       }
       // Defer the position label one frame so layout has settled
       requestAnimationFrame(() => {
+        // Align note names to the actual string positions
+        positionNoteLabels(svgContainer, noteRow);
         addPositionLabel(svgContainer, chordObj.position, ink, 25);
       });
 }
