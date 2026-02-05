@@ -62,7 +62,7 @@
       background: rgba(255,255,255,.03);
       cursor:pointer;
       font-size: 13px;
-      color: var(--text);
+      color: var(--muted);
       user-select:none;
     }
     .tab.on{
@@ -104,8 +104,7 @@
       padding: 10px 12px;
       cursor:pointer;
       user-select:none;
-          color: var(--text);
-}
+    }
     .btn.small{ padding:6px 10px; border-radius: 10px; font-size: 12px; }
     .btn.primary{ background: rgba(122,162,255,.18); border-color: rgba(122,162,255,.35); }
     .btn.warn{ background: rgba(255,210,122,.14); border-color: rgba(255,210,122,.35); }
@@ -119,8 +118,7 @@
       cursor:pointer;
       font-size: 13px;
       user-select:none;
-          color: var(--text);
-}
+    }
     .chip.on{ background: rgba(122,162,255,.22); border-color: rgba(122,162,255,.45); }
 
     .field{ display:flex; flex-direction:column; gap:6px; min-width: 170px; }
@@ -153,7 +151,7 @@
     .bigChord{ font-size: 34px; font-weight: 700; letter-spacing: .3px; }
     .cards{
       display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 12px;
     }
     .card{
@@ -170,37 +168,9 @@
 .cardHeader{ font-size: 20px; font-weight: 700; line-height: 1.12; }
 .cardSubHeader{ font-size: 14px; color: var(--muted); margin-top: 2px; }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; color: var(--muted); }
-    .noteRow{
-      margin: 6px auto 0;
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      justify-items: center;
-      align-items: center;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 12px;
-      line-height: 1.1;
-      color: var(--muted);
-    }
-    .noteRow.aligned{
-      position: relative;
-      display: block;
-      height: 1.6em;
-      margin-top: 6px;
-    }
-    .noteRow.aligned .noteLabel{
-      position: absolute;
-      top: 0;
-      transform: translateX(-50%);
-      white-space: nowrap;
-    }
-    .noteLabel{
-      text-align: center;
-      min-height: 1em;
-      white-space: nowrap;
-    }
-.star{ cursor:pointer; user-select:none; font-size: 26px; opacity: .9; }
+    .star{ cursor:pointer; user-select:none; font-size: 26px; opacity: .9; }
     .star.on{ color: var(--warn); }
-    .svgWrap{ display:flex; justify-content:center; align-items:center; min-height: 230px; }
+    .svgWrap{ display:flex; justify-content:center; align-items:center; min-height: 170px; }
     .badge{
       font-size: 11px;
       padding: 4px 8px;
@@ -229,7 +199,7 @@
 <header>
   <h1>
     Chord Shuffler
-    <span class="pill">build v7 • build v6 • triads + 4‑note voicings • prioritise 1–3 & 2–4</span>
+    <span class="pill">triads + 4‑note voicings • prioritise 1–3 & 2–4</span>
   </h1>
 </header>
 
@@ -239,7 +209,6 @@
   <div class="tabs">
     <div id="tabSetup" class="tab on">Setup</div>
     <div id="tabTrainer" class="tab">Trainer</div>
-    <div id="tabFavourites" class="tab">Favourites</div>
   </div>
 
   <div id="setupView" class="grid cols-2" style="margin-top:10px;">
@@ -340,9 +309,8 @@
 
             <div class="row">
               <div class="field" style="min-width:220px;">
-                <div class="label">Max diagrams per Display</div>
+                <div class="label">Max voicings to show</div>
                 <input id="maxShow" class="input" type="number" min="4" max="80" value="18"/>
-                <div class="hint">Limits how many diagrams are rendered when you tap <b>Display</b> (helps performance on phones).</div>
               </div>
               <div class="spacer"></div>
               <button id="btnGoTrainer" class="btn primary">Go to Trainer</button>
@@ -425,66 +393,6 @@
       </div>
     </div>
   </div>
-
-
-  <div id="favouritesView" style="display:none; margin-top:10px;">
-    <div class="grid cols-2">
-      <div class="panel">
-        <div class="hd">
-          <h2>Favourites</h2>
-          <div class="row">
-            <button id="btnFavBackSetup" class="btn small">Setup</button>
-            <button id="btnFavBackTrainer" class="btn small">Trainer</button>
-          </div>
-        </div>
-        <div class="bd">
-          <div class="row" style="margin-bottom:10px;">
-            <span class="badge" id="favCountBadge">0 favourites</span>
-          </div>
-
-          <div class="panel" style="box-shadow:none; background:transparent; border:none;">
-            <div class="hd" style="padding:0 0 8px; border:none; background:transparent;">
-              <h2 style="font-size:13px; margin:0;">Filter by root note</h2>
-              <div class="row">
-                <button id="btnFavRootsAll" class="btn small">All</button>
-                <button id="btnFavRootsNone" class="btn small">None</button>
-              </div>
-            </div>
-            <div class="bd" style="padding:0;">
-              <div id="favRootChips" class="row"></div>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="panel" style="box-shadow:none; background:transparent; border:none;">
-            <div class="hd" style="padding:0 0 8px; border:none; background:transparent;">
-              <h2 style="font-size:13px; margin:0;">Filter by chord family</h2>
-              <div class="row">
-                <button id="btnFavFamAll" class="btn small">All</button>
-                <button id="btnFavFamNone" class="btn small">None</button>
-              </div>
-            </div>
-            <div class="bd" style="padding:0;">
-              <div class="row" id="favFamilyChips"></div>
-              <div class="hint" style="margin-top:8px;">
-                Dominant 7th = any chord containing a <b>major 3rd</b> and a <b>♭7</b> (includes altered dominants).
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="hd"><h2>Starred voicings</h2></div>
-        <div class="bd">
-          <div id="favCards" class="cards"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
@@ -618,8 +526,6 @@ const defaultState = {
   showFour: true,
   maxShow: 18,
   favourites: {},
-  favViewRoots: ROOTS_ORDERED.map(r => r.pc),
-  favViewFamilies: ["maj","min","dom7","dim","aug","other"],
   presets: [],
   presetSelected: ""
 };
@@ -639,44 +545,6 @@ function loadState(){
   }
 }
 function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
-
-function parseVoicingId(id){
-  // id format: rootPc|typeSym|patternId|fret6,fret5,fret4,fret3,fret2,fret1
-  const parts = String(id).split("|");
-  if(parts.length < 4) return null;
-  const rootPc = Number(parts[0]);
-  const typeSym = parts[1];
-  const patternId = parts[2];
-  const frets = parts.slice(3).join("|").split(","); // typeSym may contain commas? No, but safe.
-  if(frets.length !== 6) return null;
-  const fretsByString = {};
-  // frets are in 6->1 order
-  const order = [6,5,4,3,2,1];
-  for(let i=0;i<6;i++){
-    const v = frets[i];
-    if(v === "x") continue;
-    const n = Number(v);
-    if(!Number.isFinite(n)) continue;
-    fretsByString[order[i]] = n;
-  }
-  return { rootPc, typeSym, patternId, fretsByString };
-}
-
-function normaliseFavourites(){
-  if(!state.favourites || typeof state.favourites !== "object") state.favourites = {};
-  for(const [id, val] of Object.entries(state.favourites)){
-    if(val === true){
-      const parsed = parseVoicingId(id);
-      if(parsed){
-        state.favourites[id] = { ...parsed, addedAt: Date.now() };
-      }else{
-        delete state.favourites[id];
-      }
-    }
-  }
-  saveState();
-}
-
 function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
 
 /* -------------------------
@@ -840,19 +708,15 @@ function voicingId(v){
   return `${v.rootPc}|${v.typeSym}|${v.pattern.id}|${frets6.join(",")}`;
 }
 
-
-function notesPerString(v){
-  // Notes per string, left-to-right on the diagram: 6(E) 5(A) 4(D) 3(G) 2(B) 1(e)
-  const notes = [];
+function fretsSummary(v){
+  const names = {6:"E",5:"A",4:"D",3:"G",2:"B",1:"e"};
+  const parts = [];
   for(let s=6; s>=1; s--){
     const f = v.fretsByString[s];
-    if(f === undefined) notes.push("");
-    else notes.push(noteName(pcAt(s, f)));
+    parts.push(`${names[s]}:${f ?? "x"}`);
   }
-  return notes;
+  return parts.join("  ");
 }
-
-
 
 function degreeLabel(typeSym, interval){
   const has9 = /9/.test(typeSym) || /add9/.test(typeSym);
@@ -887,62 +751,10 @@ function degreeLabel(typeSym, interval){
   }
 }
 
-
-function addPositionLabel(svgContainer, position, ink, fontSizePx){
-  // SVGuitar aligns the fret label to the top line; guitarists expect it aligned to the first fret *space*.
-  // So we hide SVGuitar's fret label and draw our own aligned to the 2nd fret line down (first fret line).
-  if(!position) return;
-  const svg = svgContainer.querySelector("svg");
-  if(!svg) return;
-
-  // remove previous
-  const prev = svg.querySelector(".posLabel");
-  if(prev) prev.remove();
-
-  const lines = Array.from(svg.querySelectorAll("line"));
-  const horiz = lines.filter(l => {
-    const y1 = l.y1?.baseVal?.value ?? NaN;
-    const y2 = l.y2?.baseVal?.value ?? NaN;
-    return isFinite(y1) && isFinite(y2) && Math.abs(y1 - y2) < 0.5;
-  });
-  if(horiz.length < 2) return;
-
-  const ys = Array.from(new Set(horiz.map(l => Math.round((l.y1.baseVal.value)*100)/100))).sort((a,b)=>a-b);
-  if(ys.length < 2) return;
-  const yLine = ys[1];
-
-  const vert = lines.filter(l => {
-    const x1 = l.x1?.baseVal?.value ?? NaN;
-    const x2 = l.x2?.baseVal?.value ?? NaN;
-    return isFinite(x1) && isFinite(x2) && Math.abs(x1 - x2) < 0.5;
-  });
-  let xLeft = Infinity;
-  for(const l of vert){
-    xLeft = Math.min(xLeft, l.x1.baseVal.value);
-  }
-  if(!isFinite(xLeft)) xLeft = 0;
-
-  const x = xLeft - Math.max(18, fontSizePx * 0.9); // push left so it never sits on top of the E string
-
-  const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  t.setAttribute("class", "posLabel");
-  t.setAttribute("x", String(x));
-  // align label to the first fret line
-  t.setAttribute("y", String(yLine));
-  t.setAttribute("dominant-baseline", "middle");
-  t.setAttribute("text-anchor", "end");
-  t.setAttribute("font-size", String(fontSizePx));
-  t.setAttribute("fill", ink);
-  t.textContent = `${position}fr`;
-  svg.appendChild(t);
-}
-
 function buildSvguitarChord(v){
   const used = Object.values(v.fretsByString).map(Number);
   const pos = Math.min(...used);
-  const maxF = Math.max(...used);
-  const span = maxF - pos; // e.g. 5->9 is span 4, needs 5 frets drawn
-  const fretsOnChart = Math.max(span + 1, 4);
+  const fretsOnChart = Math.max(state.maxSpan, 4);
 
   const fingers = [];
   for(let s=1; s<=6; s++){
@@ -956,82 +768,129 @@ function buildSvguitarChord(v){
     const label = degreeLabel(v.typeSym, interval);
     fingers.push([s, rel, label]);
   }
-  return { title: "", position: pos, fingers, fretsOnChart };
+  return { title: v.pattern.label, position: pos, fingers, fretsOnChart };
 }
 
 function renderVoicings(list){
-  renderVoicingCards(list, "cards", "voicingCount", true);
-}
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
 
+  let out = list.slice();
+  if(state.favOnly) out = out.filter(v => !!state.favourites[voicingId(v)]);
+  if(state.favFirst){
+    out.sort((a,b) => {
+      const fa = !!state.favourites[voicingId(a)];
+      const fb = !!state.favourites[voicingId(b)];
+      if(fa !== fb) return (fb - fa);
+      return b.score - a.score;
+    });
+  }
 
-function positionNoteLabels(svgContainer, noteRow){
-  try{
-    const svg = svgContainer.querySelector("svg");
-    if(!svg || !noteRow) return;
+  const maxShow = Math.max(4, Math.min(200, Number(state.maxShow) || 18));
+  const shown = out.slice(0, maxShow);
+  document.getElementById("voicingCount").textContent = String(shown.length);
 
-    const labels = Array.from(noteRow.querySelectorAll(".noteLabel"));
-    if(labels.length !== 6) return;
+  // If SVGuitar failed to load, show a friendly message
+  if(typeof svguitar === "undefined"){
+    const warn = document.createElement("div");
+    warn.className = "hint";
+    warn.textContent = "SVGuitar didn’t load (no internet / blocked). You can still see fret summaries below each card.";
+    cards.appendChild(warn);
+  }
 
-    // Collect vertical string lines (x1 ~ x2, long length)
-    const lines = Array.from(svg.querySelectorAll("line"));
-    const xs = [];
-    for(const ln of lines){
-      const x1 = parseFloat(ln.getAttribute("x1"));
-      const x2 = parseFloat(ln.getAttribute("x2"));
-      const y1 = parseFloat(ln.getAttribute("y1"));
-      const y2 = parseFloat(ln.getAttribute("y2"));
-      if(!isFinite(x1)||!isFinite(x2)||!isFinite(y1)||!isFinite(y2)) continue;
-      if(Math.abs(x1 - x2) < 0.2 && Math.abs(y1 - y2) > 18){
-        xs.push(x1);
-      }
+  const css = getComputedStyle(document.documentElement);
+  const ink = css.getPropertyValue('--text').trim() || '#e8ecf4';
+  const accent = css.getPropertyValue('--accent').trim() || ink;
+  const bg = css.getPropertyValue('--bg').trim() || '#0b0d12';
+
+  for(const v of shown){
+    const id = voicingId(v);
+    const isFav = !!state.favourites[id];
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const top = document.createElement("div");
+    top.className = "cardTop";
+
+    const textWrap = document.createElement("div");
+
+const hdr = document.createElement("div");
+hdr.className = "cardHeader";
+hdr.textContent = chordLabel(v.rootPc, v.typeSym);
+
+const sub = document.createElement("div");
+sub.className = "cardSubHeader";
+sub.textContent = v.pattern.label;
+
+textWrap.appendChild(hdr);
+textWrap.appendChild(sub);
+const star = document.createElement("div");
+    star.className = "star" + (isFav ? " on" : "");
+    star.textContent = isFav ? "★" : "☆";
+    star.onclick = () => {
+      const now = !!state.favourites[id];
+      if(now) delete state.favourites[id];
+      else state.favourites[id] = true;
+      saveState();
+      renderVoicings(list);
+    };
+
+    top.appendChild(textWrap);
+    top.appendChild(star);
+
+    const svgWrap = document.createElement("div");
+    svgWrap.className = "svgWrap";
+    const svgContainer = document.createElement("div");
+    svgContainer.style.width = "220px";
+    svgWrap.appendChild(svgContainer);
+
+    const info = document.createElement("div");
+    info.className = "mono";
+    info.textContent = fretsSummary(v);
+
+    card.appendChild(top);
+    card.appendChild(svgWrap);
+    card.appendChild(info);
+    cards.appendChild(card);
+
+    if(typeof svguitar !== "undefined"){
+      const chordObj = buildSvguitarChord(v);
+      const chart = new svguitar.SVGuitarChord(svgContainer);
+      chart.configure({
+        orientation: "vertical",
+        style: "normal",
+        strings: 6,
+        frets: chordObj.fretsOnChart,
+        titleFontSize: 22,
+        fretLabelPosition: "left",
+        fretLabelFontSize: 24,
+        sidePadding: 0.28,
+
+        // visible on dark UI:
+        color: ink,
+        stringColor: ink,
+        fretColor: ink,
+        fretLabelColor: ink,
+        tuningsColor: ink,
+        backgroundColor: "none",
+        fingerColor: accent,
+        fingerTextColor: bg,
+        fingerTextSize: 20,
+        fingerStrokeColor: ink,
+        fingerStrokeWidth: 1,
+        fingerSize: 0.92,
+        strokeWidth: 2,
+      }).chord({
+        title: chordObj.title,
+        position: chordObj.position,
+        fingers: chordObj.fingers,
+        barres: [],
+        capo: false
+      }).draw();
     }
-
-    // Unique & sorted X positions in SVG coords
-    let unique = Array.from(new Set(xs.map(x => Math.round(x)))).sort((a,b)=>a-b);
-
-    // Try to keep the 6 most central lines if extras were captured
-    if(unique.length > 6){
-      const mid = Math.floor(unique.length/2);
-      const start = Math.max(0, mid-3);
-      unique = unique.slice(start, start+6);
-    }
-
-    // Determine viewBox width in SVG coords
-    const vb = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal : null;
-    const viewW = (vb && vb.width) ? vb.width : null;
-
-    // Pixel width of rendered SVG (prefer container if svg is reporting tiny width)
-    const rect = svg.getBoundingClientRect();
-    const rectW = rect.width || 0;
-    const contW = svgContainer.clientWidth || 0;
-    const svgWpx = (rectW >= 160 ? rectW : (contW || rectW || 340));
-
-    // Fallback to equal spacing if we couldn't reliably detect 6 strings
-    if(unique.length !== 6 || !viewW){
-      noteRow.classList.remove("aligned");
-      noteRow.style.width = svgWpx + "px";
-      noteRow.style.display = "grid";
-      return;
-    }
-
-    // Switch to aligned absolute positioning
-    noteRow.classList.add("aligned");
-    noteRow.style.width = svgWpx + "px";
-
-    const scale = svgWpx / viewW;
-    for(let i=0; i<6; i++){
-      const xPx = unique[i] * scale;
-      labels[i].style.left = xPx + "px";
-    }
-  }catch(e){
-    // Fall back to grid
-    try{
-      noteRow.classList.remove("aligned");
-      noteRow.style.display = "grid";
-    }catch{}
   }
 }
-
 
 /* -------------------------
    Deck/random selection
@@ -1166,281 +1025,6 @@ function deletePreset(){
 /* -------------------------
    UI rendering
 --------------------------*/
-
-function chordFamily(typeSym){
-  const def = chordTypeDef(typeSym);
-  if(!def) return "other";
-  const ints = def.intervals || [];
-  const hasM3 = ints.includes(4);
-  const hasm3 = ints.includes(3);
-  const hasb7 = ints.includes(10);
-  const hasDim5 = ints.includes(6);
-  const hasAug5 = ints.includes(8);
-
-  // Dominant 7th: major 3rd + b7
-  if(hasM3 && hasb7) return "dom7";
-
-  // Diminished-ish: b3 + b5 (includes m7b5)
-  if(hasm3 && hasDim5) return "dim";
-
-  // Augmented
-  if(hasM3 && hasAug5) return "aug";
-
-  if(hasm3) return "min";
-  if(hasM3) return "maj";
-  return "other";
-}
-
-const FAM_LABELS = [
-  { id:"maj", label:"Maj" },
-  { id:"min", label:"Min" },
-  { id:"dom7", label:"Dominant 7th" },
-  { id:"dim", label:"Dim" },
-  { id:"aug", label:"Aug" },
-  { id:"other", label:"Other" }
-];
-
-function renderFavRootChips(){
-  const wrap = document.getElementById("favRootChips");
-  if(!wrap) return;
-  wrap.innerHTML = "";
-  for(const r of ROOTS_ORDERED){
-    const label = (state.enharmonic === "flat") ? r.flat : r.sharp;
-    const chip = document.createElement("div");
-    chip.className = "chip" + (state.favViewRoots.includes(r.pc) ? " on" : "");
-    chip.textContent = label;
-    chip.onclick = () => {
-      const i = state.favViewRoots.indexOf(r.pc);
-      if(i >= 0) state.favViewRoots.splice(i,1);
-      else state.favViewRoots.push(r.pc);
-      saveState();
-      renderFavRootChips();
-      renderFavouritesScreen();
-    };
-    wrap.appendChild(chip);
-  }
-}
-
-function renderFavFamilyChips(){
-  const wrap = document.getElementById("favFamilyChips");
-  if(!wrap) return;
-  wrap.innerHTML = "";
-  for(const f of FAM_LABELS){
-    const chip = document.createElement("div");
-    chip.className = "chip" + (state.favViewFamilies.includes(f.id) ? " on" : "");
-    chip.textContent = f.label;
-    chip.onclick = () => {
-      const i = state.favViewFamilies.indexOf(f.id);
-      if(i >= 0) state.favViewFamilies.splice(i,1);
-      else state.favViewFamilies.push(f.id);
-      saveState();
-      renderFavFamilyChips();
-      renderFavouritesScreen();
-    };
-    wrap.appendChild(chip);
-  }
-}
-
-function favouritesAsList(){
-  const out = [];
-  for(const [id, val] of Object.entries(state.favourites || {})){
-    if(!val) continue;
-    const v = (val === true) ? parseVoicingId(id) : val;
-    if(!v || v.rootPc === undefined) continue;
-    const pat = PATTERNS.find(p => p.id === (v.patternId || v.pattern?.id)) || PATTERNS.find(p => p.id === (v.patternId)) || PATTERNS[0];
-    out.push({
-      rootPc: Number(v.rootPc),
-      typeSym: v.typeSym,
-      pattern: pat,
-      fretsByString: v.fretsByString,
-      score: 0,
-      _favId: id
-    });
-  }
-  return out;
-}
-
-function renderVoicingCards(list, cardsId, countId, applyTrainerFilters){
-  const cards = document.getElementById(cardsId);
-  if(!cards) return;
-  cards.innerHTML = "";
-
-  let out = list.slice();
-
-  // trainer filters (favOnly / favFirst)
-  if(applyTrainerFilters){
-    if(state.favOnly) out = out.filter(v => !!state.favourites[voicingId(v)]);
-    if(state.favFirst){
-      out.sort((a,b) => {
-        const fa = !!state.favourites[voicingId(a)];
-        const fb = !!state.favourites[voicingId(b)];
-        if(fa !== fb) return (fb - fa);
-        return (b.score||0) - (a.score||0);
-      });
-    }
-  }
-
-  const maxShow = Math.max(4, Math.min(200, Number(state.maxShow) || 18));
-  const shown = out.slice(0, maxShow);
-  if(countId){
-    const c = document.getElementById(countId);
-    if(c) c.textContent = String(shown.length);
-  }
-
-  if(typeof svguitar === "undefined"){
-    const warn = document.createElement("div");
-    warn.className = "hint";
-    warn.textContent = "SVGuitar didn’t load (no internet / blocked). You can still see note summaries below each card.";
-    cards.appendChild(warn);
-  }
-
-  const css = getComputedStyle(document.documentElement);
-  const ink = css.getPropertyValue('--text').trim() || '#e8ecf4';
-  const accent = css.getPropertyValue('--accent').trim() || ink;
-
-  for(const v of shown){
-    const id = v._favId || voicingId(v);
-    const isFav = !!state.favourites[id];
-
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const hdrWrap = document.createElement("div");
-    hdrWrap.style.display = "flex";
-    hdrWrap.style.justifyContent = "space-between";
-    hdrWrap.style.alignItems = "flex-start";
-    hdrWrap.style.gap = "10px";
-
-    const leftHdr = document.createElement("div");
-    const hdr = document.createElement("div");
-    hdr.className = "cardHeader";
-    hdr.textContent = chordLabel(v.rootPc, v.typeSym);
-
-    const sub = document.createElement("div");
-    sub.className = "cardSubHeader";
-    sub.textContent = v.pattern.label;
-
-    leftHdr.appendChild(hdr);
-    leftHdr.appendChild(sub);
-
-    const star = document.createElement("div");
-    star.className = "star" + (isFav ? " on" : "");
-    star.textContent = isFav ? "★" : "☆";
-
-    star.onclick = () => {
-      const now = !!state.favourites[id];
-      if(now){
-        delete state.favourites[id];
-      }else{
-        state.favourites[id] = {
-          rootPc: v.rootPc,
-          typeSym: v.typeSym,
-          patternId: v.pattern.id,
-          fretsByString: v.fretsByString,
-          addedAt: Date.now()
-        };
-      }
-      saveState();
-      const isFavNow = !!state.favourites[id];
-      star.classList.toggle("on", isFavNow);
-      star.textContent = isFavNow ? "★" : "☆";
-      // In favourites screen, if we unstar it, remove it immediately
-      if(cardsId === "favCards" && !isFavNow){
-        card.remove();
-        renderFavouritesScreen(); // updates count badge
-      }
-    };
-
-    hdrWrap.appendChild(leftHdr);
-    hdrWrap.appendChild(star);
-
-    const svgWrap = document.createElement("div");
-    svgWrap.className = "svgWrap";
-    const svgContainer = document.createElement("div");
-    svgContainer.style.width = "340px";
-    svgContainer.style.maxWidth = "100%";
-    svgWrap.appendChild(svgContainer);
-
-    const noteRow = document.createElement("div");
-    noteRow.className = "noteRow";
-    noteRow.style.width = svgContainer.style.width;
-    const notes = notesPerString(v);
-    for(const n of notes){
-      const cell = document.createElement("div");
-      cell.className = "noteLabel";
-      cell.textContent = n;
-      noteRow.appendChild(cell);
-    }
-
-    card.appendChild(hdrWrap);
-    card.appendChild(svgWrap);
-    card.appendChild(noteRow);
-    cards.appendChild(card);
-
-    if(typeof svguitar !== "undefined"){
-      const chordObj = buildSvguitarChord(v);
-      const chart = new svguitar.SVGuitarChord(svgContainer);
-      chart.configure({
-        orientation: "vertical",
-        style: "normal",
-        strings: 6,
-        frets: chordObj.fretsOnChart,
-        titleFontSize: 0,
-        fretLabelPosition: "left",
-        fretLabelFontSize: 0,
-        sidePadding: 0.45,
-        fretLabelColor: "transparent",
-        color: ink,
-        stringColor: ink,
-        fretColor: ink,
-        tuningsColor: ink,
-        backgroundColor: "none",
-        fingerColor: accent,
-        fingerStrokeColor: ink,
-        fingerStrokeWidth: 1,
-        fingerSize: 0.92,
-        fingerTextSize: 24,
-        strokeWidth: 2,
-      }).chord({
-        title: chordObj.title,
-        position: chordObj.position,
-        fingers: chordObj.fingers,
-        barres: [],
-        capo: false
-      }).draw();
-      // Ensure the rendered SVG scales to the container (prevents tiny diagrams on some browsers)
-      const _svg = svgContainer.querySelector("svg");
-      if(_svg){
-        _svg.removeAttribute("width");
-        _svg.removeAttribute("height");
-        _svg.style.width = "100%";
-        _svg.style.height = "auto";
-        _svg.style.display = "block";
-      }
-      // Defer the position label one frame so layout has settled
-      requestAnimationFrame(() => {
-        // Align note names to the actual string positions
-        positionNoteLabels(svgContainer, noteRow);
-        addPositionLabel(svgContainer, chordObj.position, ink, 25);
-      });
-}
-  }
-}
-
-function renderFavouritesScreen(){
-  normaliseFavourites();
-  const all = favouritesAsList();
-
-  const filtered = all.filter(v => state.favViewRoots.includes(v.rootPc))
-                      .filter(v => state.favViewFamilies.includes(chordFamily(v.typeSym)));
-
-  // Update badge
-  const badge = document.getElementById("favCountBadge");
-  if(badge) badge.textContent = `${filtered.length} favourites`;
-
-  renderVoicingCards(filtered, "favCards", null, false);
-}
-
 function updatePoolBadge(){
   document.getElementById("summaryBadge").textContent = `${pool().length} chords in pool`;
 }
@@ -1508,7 +1092,7 @@ function renderTypeList(){
 
       const title = document.createElement("div");
       title.className = "type-title";
-      title.textContent = (t.sym === "") ? "maj" : t.sym;
+      title.textContent = (t.sym === "") ? "maj (Major)" : `${t.sym} (${t.name})`;
 
       const sub = document.createElement("div");
       sub.className = "type-sub";
@@ -1548,8 +1132,6 @@ function renderAllUI(){
   renderTypeList();
   updatePoolBadge();
   refreshPresetSelect();
-  renderFavRootChips();
-  renderFavFamilyChips();
 }
 
 /* -------------------------
@@ -1558,35 +1140,23 @@ function renderAllUI(){
 function setTab(which){
   const setup = document.getElementById("setupView");
   const trainer = document.getElementById("trainerView");
-  const favs = document.getElementById("favouritesView");
   const tSetup = document.getElementById("tabSetup");
   const tTrainer = document.getElementById("tabTrainer");
-  const tFavs = document.getElementById("tabFavourites");
-
-  const on = (el, yes) => { if(!el) return; el.classList.toggle("on", !!yes); };
 
   if(which === "setup"){
     setup.style.display = "";
     trainer.style.display = "none";
-    if(favs) favs.style.display = "none";
-    on(tSetup,true); on(tTrainer,false); on(tFavs,false);
-  }else if(which === "trainer"){
-    setup.style.display = "none";
-    trainer.style.display = "";
-    if(favs) favs.style.display = "none";
-    on(tSetup,false); on(tTrainer,true); on(tFavs,false);
+    tSetup.classList.add("on");
+    tTrainer.classList.remove("on");
   }else{
     setup.style.display = "none";
-    trainer.style.display = "none";
-    if(favs) favs.style.display = "";
-    on(tSetup,false); on(tTrainer,false); on(tFavs,true);
-    renderFavouritesScreen();
+    trainer.style.display = "";
+    tSetup.classList.remove("on");
+    tTrainer.classList.add("on");
   }
 }
-
 document.getElementById("tabSetup").onclick = () => setTab("setup");
 document.getElementById("tabTrainer").onclick = () => setTab("trainer");
-document.getElementById("tabFavourites").onclick = () => setTab("favourites");
 document.getElementById("btnGoTrainer").onclick = () => setTab("trainer");
 document.getElementById("btnBackSetup").onclick = () => setTab("setup");
 
@@ -1653,16 +1223,9 @@ document.getElementById("btnDisplay").onclick = () => {
 };
 document.getElementById("btnClearDiagrams").onclick = () => clearDiagrams();
 
-document.getElementById("btnFavBackSetup").onclick = () => setTab("setup");
-document.getElementById("btnFavBackTrainer").onclick = () => setTab("trainer");
-document.getElementById("btnFavRootsAll").onclick = () => { state.favViewRoots = ROOTS_ORDERED.map(r => r.pc); saveState(); renderFavRootChips(); renderFavouritesScreen(); };
-document.getElementById("btnFavRootsNone").onclick = () => { state.favViewRoots = []; saveState(); renderFavRootChips(); renderFavouritesScreen(); };
-document.getElementById("btnFavFamAll").onclick = () => { state.favViewFamilies = FAM_LABELS.map(x => x.id); saveState(); renderFavFamilyChips(); renderFavouritesScreen(); };
-document.getElementById("btnFavFamNone").onclick = () => { state.favViewFamilies = []; saveState(); renderFavFamilyChips(); renderFavouritesScreen(); };
 /* -------------------------
    Init
 --------------------------*/
-normaliseFavourites();
 renderAllUI();
 rebuildDeck();
 startAuto();
